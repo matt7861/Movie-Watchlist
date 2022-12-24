@@ -12,15 +12,27 @@
 </head>
 
 <body>
-    <form id="search-form">
-        <input name="search" type="text">
-        <button type="submit">Search</button>
-    </form>
+    <section class="search-header padding-sides">
+        <div class="search-header__title">
+            <h1>Find your film</h1>
+            <a href="#">My Watchlist</a>
+        </div>
 
-    <div id="movie-list">
+        <form id="search-form" class="search-form">
+            <input placeholder="Search movies..." name="search" type="text">
+            <button type="submit">Search</button>
+        </form>
+    </section>
 
-    </div>
 
+    <section id="movie-list" class="movie-list">
+        <div id="placeholder" class="movie-list__placeholder">
+            <img src="/images/movie-icon.svg" alt="movie icon">
+            <p>Start exploring</p>
+        </div>
+
+
+    </section>
 </body>
 
 </html>
