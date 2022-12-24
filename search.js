@@ -1,43 +1,55 @@
-/* 
-    1.) Possible ID saved for each movie? add that ID to local storage and then loop api query for all movies
-    2.) Second solution could be to store all data as json in a data attribute on the button > add that to local storage > then retreive as js object and iterate over to pull movies in
-*/
-
 const searchForm = document.getElementById("search-form");
-const movieList = document.getElementById("movie-list");
-const palceholder = document.getElementById("placeholder");
+const movieList = document.getElementById("movie-list-results");
+const placeholder = document.getElementById("placeholder");
 const localList = localStorage.getItem("watchlist");
 const movieWatchlist = localList ? JSON.parse(localList) : [];
 let movieListHtml = "";
 
 searchForm.addEventListener("submit", getMovies);
 document.addEventListener("click", (e) => {
-  if (e.target.dataset.id) addToWatchlist(e.target.dataset.id);
+  if (e.target.dataset.id) addToWatchlist(e.target.dataset.id, e.target);
 });
 
 async function getMovies(e) {
   e.preventDefault();
 
-  // TODO: loading after search results
-  palceholder.innerHTML = '<div class="loading"></div>';
-  const formData = new FormData(searchForm);
-  const searchValue = formData.get("search");
+  // Reset and display loading
+  placeholder.innerHTML = '<div class="loading"></div>';
+  movieList.innerHTML = "";
   movieListHtml = "";
 
+  // get form data
+  const formData = new FormData(searchForm);
+  const searchValue = formData.get("search");
+
+  // fetch movie and generate movie details html
   const res = await fetch(
     `https://www.omdbapi.com/?s=${searchValue}&type=movie&page=1&apikey=e18e4510`
   );
   const data = await res.json();
 
-  // TODO: make its own function
   if (data.Search) {
-    for (let movie of data.Search) {
-      const res = await fetch(
-        `https://www.omdbapi.com/?i=${movie.imdbID}&type=movie&apikey=e18e4510`
-      );
-      const data = await res.json();
+    await getMovieDetails(data.Search);
+    movieList.innerHTML = movieListHtml;
+    // remove loading
+    placeholder.innerHTML = "";
+    // Check if movie is already in watchlist
+    updateButtons();
+  } else {
+    // no results found
+    placeholder.innerHTML =
+      "<p class='no-results'>Unable to find what you’re looking for. </br>Please try another search.</p>";
+  }
+}
 
-      movieListHtml += `
+async function getMovieDetails(data) {
+  for (let movie of data) {
+    const res = await fetch(
+      `https://www.omdbapi.com/?i=${movie.imdbID}&type=movie&apikey=e18e4510`
+    );
+    const data = await res.json();
+
+    movieListHtml += `
         <div class="movie">
           <img class="movie__thumbnail" src="${data.Poster}"" alt="">
           <div class="movie__details">
@@ -51,26 +63,31 @@ async function getMovies(e) {
               <div class="movie__info">
                   <p>${data.Runtime} min</p>
                   <p>${data.Genre}</p>
-                  <button class="add-to-watchlist" data-id="${data.imdbID}">Watchlist</button>
+                  <button class="add-to-watchlist" data-id="${data.imdbID}"><img src="/images/add.svg"><span>Watchlist</span></button>
               </div>
               <p>${data.Plot}</p>
           </div>
       </div>
     `;
-    }
-
-    movieList.innerHTML = movieListHtml;
-  } else {
-    palceholder.innerHTML =
-      "<p class='no-results'>Unable to find what you’re looking for. </br>Please try another search.</p>";
   }
 }
 
-function addToWatchlist(id) {
+function updateButtons() {
+  for (let id of movieWatchlist) {
+    if (document.querySelector(`[data-id='${id}']`)) {
+      document.querySelector(`[data-id='${id}']`).innerHTML =
+        '<img src="/images/remove.svg"><span>Remove</span>';
+    }
+  }
+}
+
+function addToWatchlist(id, button) {
   if (movieWatchlist.includes(id)) {
-    // TODO: change this to a better notification. Maybe just change inner text to "Already added to watchlist!"
-    alert("already added");
+    button.innerHTML = '<img src="/images/add.svg"><span>Watchlist</span>';
+    movieWatchlist.splice(movieWatchlist.indexOf(id), 1);
+    localStorage.setItem("watchlist", JSON.stringify(movieWatchlist));
   } else {
+    button.innerHTML = '<img src="/images/remove.svg"><span>Remove</span>';
     movieWatchlist.push(id);
     localStorage.setItem("watchlist", JSON.stringify(movieWatchlist));
   }
